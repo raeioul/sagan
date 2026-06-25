@@ -1,7 +1,7 @@
 .venv
 data
-*.pdf
-*.txt
+verify_sacs_report.pdf
+verify_tcc_report.pdf
 .DS_Store
 .git
 __pycache__
