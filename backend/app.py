@@ -347,4 +347,5 @@ def report_pdf_tcc(id):
     return send_file(pdf, mimetype='application/pdf', as_attachment=True, download_name=f'TCC_{report.client.name.replace(" ", "_")}_{report.quarter}.pdf')
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    debug_mode = os.getenv('FLASK_DEBUG', 'false').lower() in ('true', '1', 'yes')
+    app.run(debug=debug_mode, host='0.0.0.0', port=int(os.getenv('PORT', 5000)))

@@ -1,0 +1,29 @@
+Server-Side Rendering (SSR)
+ 
+Client-Side Rendering (CSR)
+ 
+Routing y environment-based builds
+
+8.
+¿Cuentas con experiencia creando arquitecturas modulares y reutilizables de componentes?
+9.
+¿Cuentas con experiencia conocimiento sólido de REST APIs y fundamentos de HTTP?
+10.
+¿Cuentas con experiencia consumiendo APIs seguras con JWT, OAuth o autenticación basada en sesiones?
+11.
+¿Tienes comprensión de patrones de autorización (RBAC, claims-based access)?
+12.
+¿Cuentas con familiaridad con paginación, filtros, sorting y manejo de errores desde backend?
+13.
+¿Cuentas con capacidad para colaborar con equipos backend y definir contratos de API?
+
+
+api restful
+HTML 5
+css
+js
+MySQL
+post
+
+
+SOLID, kiss
