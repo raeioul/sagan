@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header">
+    <h2>Report Compiled — {{ report.client.name }}</h2>
+    <p class="subtitle">Quarter: <strong>{{ report.quarter }}</strong> | Compiled on: {{ report.created_at.strftime('%Y-%m-%d at %I:%M %p') }}</p>
+</div>
+
+<div class="report-actions-panel glass-card">
+    <div class="pdf-actions">
+        <a href="{{ url_for('report_pdf_sacs', id=report.id) }}" class="btn btn-primary btn-large" target="_blank">📥 Download SACS PDF</a>
+        <a href="{{ url_for('report_pdf_tcc', id=report.id) }}" class="btn btn-primary btn-large" target="_blank">📥 Download TCC PDF</a>
+    </div>
+    <div class="navigation-actions">
+        <a href="{{ url_for('report_new', id=report.client_id) }}" class="btn btn-secondary">New Quarterly Report</a>
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">Back to Client Dashboard</a>
+    </div>
+</div>
+
+<div class="report-data-grid">
+    <!-- SACS Data Summary Card -->
+    <div class="glass-card report-summary-section">
+        <h3 class="section-title">📊 SACS Cashflow Metrics</h3>
+        <table class="report-summary-table">
+            <tbody>
+                <tr>
+                    <td>Monthly Inflow Balance</td>
+                    <td class="value">${{ report.inflow_balance | round(0) | int | numberformat }}</td>
+                </tr>
+                <tr>
+                    <td>Monthly Outflow Balance</td>
+                    <td class="value">${{ report.outflow_balance | round(0) | int | numberformat }}</td>
+                </tr>
+                <tr class="highlight-row green">
+                    <td>Remaining Surplus (Automated Transfer)</td>
+                    <td class="value">${{ (report.inflow_balance - report.outflow_balance) | round(0) | int | numberformat }}</td>
+                </tr>
+                <tr>
+                    <td>Private Reserve Account</td>
+                    <td class="value">${{ report.private_reserve_balance | round(0) | int | numberformat }}</td>
+                </tr>
+                <tr>
+                    <td>Schwab Brokerage Account</td>
+                    <td class="value">${{ report.schwab_brokerage_balance | round(0) | int | numberformat }}</td>
+                </tr>
+                <tr class="highlight-row blue">
+                    <td>Private Reserve Target Cap</td>
+                    <td class="value">${{ report.target_amount | round(0) | int | numberformat }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- TCC Data Summary Card -->
+    <div class="glass-card report-summary-section">
+        <h3 class="section-title">💼 TCC Asset Allocation Summary</h3>
+        <table class="report-summary-table">
+            <tbody>
+                <tr>
+                    <td>Retirement Accounts (Client 1)</td>
+                    <td class="value">${{ retirement1_total | round(0) | int | numberformat }}</td>
+                </tr>
+                {% if report.client.spouse_name %}
+                <tr>
+                    <td>Retirement Accounts (Client 2 / Spouse)</td>
+                    <td class="value">${{ retirement2_total | round(0) | int | numberformat }}</td>
+                </tr>
+                {% endif %}
+                <tr>
+                    <td>Non-Retirement Investment Accounts</td>
+                    <td class="value">${{ non_retirement_total | round(0) | int | numberformat }}</td>
+                </tr>
+                <tr>
+                    <td>Trust Asset Value (Real Estate)</td>
+                    <td class="value">${{ trust_total | round(0) | int | numberformat }}</td>
+                </tr>
+                <tr class="highlight-row gold">
+                    <td>Grand Total Assets (Net Worth)</td>
+                    <td class="value">${{ grand_total_net_worth | round(0) | int | numberformat }}</td>
+                </tr>
+                <tr class="divider"><td colspan="2"></td></tr>
+                <tr class="highlight-row red">
+                    <td>Total Liabilities (Tracked Separately)</td>
+                    <td class="value">${{ liabilities_total | round(0) | int | numberformat }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="report-details-section glass-card">
+    <h3 class="section-title">🔍 Individual Account Breakdown</h3>
+    <table class="dashboard-table">
+        <thead>
+            <tr>
+                <th>Account Name</th>
+                <th>Type</th>
+                <th>Ownership</th>
+                <th>Account Number</th>
+                <th>Interest Rate</th>
+                <th>Reporting Balance</th>
+                <th>Cash Portion</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for bal in report.balances %}
+            <tr>
+                <td>{{ bal.account.name }}</td>
+                <td><span class="acc-badge {{ bal.account.account_type }}">{{ bal.account.account_type | replace('_', ' ') | title }}</span></td>
+                <td>{{ bal.account.owner | title }}</td>
+                <td>{{ '*' ~ bal.account.last_four if bal.account.last_four else '—' }}</td>
+                <td>{{ bal.account.interest_rate ~ '%' if bal.account.interest_rate is not none else '—' }}</td>
+                <td class="value">${{ bal.balance | round(0) | int | numberformat }}</td>
+                <td class="value">
+                    {% if bal.cash_balance is not none %}
+                        ${{ bal.cash_balance | round(0) | int | numberformat }}
+                    {% else %}
+                        <span class="no-data">—</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

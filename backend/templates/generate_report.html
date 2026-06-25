@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header">
+    <h2>Generate Quarterly Report — {{ client.name }}</h2>
+    <p class="subtitle">Enter the dynamic quarterly balances. Static account structures are pre-loaded from the client's profile.</p>
+</div>
+
+<!-- Part 1: Pre-Meeting Verification Checklist -->
+<div class="glass-card checklist-card form-section">
+    <h3 class="section-title">⏱️ Pre-Meeting Verification Checklist (2 Days Prior)</h3>
+    <p class="section-subtitle">Perform these steps to gather data before entering balances below.</p>
+    <div class="checklist-items">
+        <div class="checklist-item">
+            <input type="checkbox" id="chk-bank-email" class="checklist-checkbox">
+            <label for="chk-bank-email" class="checklist-label">
+                <strong>Request Private Reserve balance from Pinnacle Bank via secure email</strong>
+                <span class="checklist-description">Click below to draft an email request to the personal banker.</span>
+                <a href="mailto:banker@pinnaclebank.com?subject=Balance%20Request%20for%20{{ client.name }}%20-%20Meeting%20Prep&body=Hi,%20could%20you%20please%20provide%20the%20current%20balances%20for%20the%20accounts%20held%20by%20{{ client.name }}%20as%20of%20today?%20Thank%20you!" class="btn btn-secondary btn-xs mailto-btn">📧 Draft Bank Email</a>
+            </label>
+        </div>
+        <div class="checklist-item">
+            <input type="checkbox" id="chk-schwab-web" class="checklist-checkbox">
+            <label for="chk-schwab-web" class="checklist-label">
+                <strong>Retrieve Schwab Brokerage balances (Andrew or Rebecca)</strong>
+                <span class="checklist-description">Log in directly to the Schwab website and extract the balances and cash portions.</span>
+                <a href="https://client.schwab.com" target="_blank" class="btn btn-secondary btn-xs portal-btn">🌐 Open Schwab Portal</a>
+            </label>
+        </div>
+        <div class="checklist-item">
+            <input type="checkbox" id="chk-zillow" class="checklist-checkbox">
+            <label for="chk-zillow" class="checklist-label">
+                <strong>Look up Zillow home Zestimate for Trust property</strong>
+                <span class="checklist-description">Type the property address into Zillow and extract the current market value.</span>
+                <a href="https://www.zillow.com" target="_blank" class="btn btn-secondary btn-xs portal-btn">🏠 Open Zillow</a>
+            </label>
+        </div>
+    </div>
+</div>
+
+<form method="POST" class="glass-form report-generation-form">
+    <div class="form-section span-2">
+        <h3 class="section-title">Report Metadata</h3>
+        <div class="inputs-row grid-2">
+            <div class="input-group">
+                <label for="quarter">Target Quarter <span class="required-star">*</span></label>
+                <input type="text" id="quarter" name="quarter" value="{{ quarter_str }}" required placeholder="e.g. 2026-Q2">
+            </div>
+            <div class="input-group">
+                <label for="target_amount">Private Reserve Target Savings Cap ($)</label>
+                <input type="number" id="target_amount" name="target_amount" step="0.01" value="{{ default_target }}">
+                <small class="help-text">Prefilled from client profile calculation: 6 &times; Expenses + Deductibles.</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- SACS Core Cashflow Form -->
+    <div class="form-section span-2">
+        <h3 class="section-title">SACS Cashflow Data</h3>
+        <p class="section-subtitle">Real-time SACS surplus is calculated as Inflow minus Outflow.</p>
+        <div class="inputs-row grid-3">
+            <div class="input-group">
+                <label for="inflow_balance">Monthly Inflow Balance ($)</label>
+                <input type="number" id="inflow_balance" name="inflow_balance" step="0.01" value="{{ client.total_inflow }}" data-calc="inflow">
+                <small class="help-text">Client 1 + Client 2 salary: ${{ client.total_inflow }}</small>
+            </div>
+            <div class="input-group">
+                <label for="outflow_balance">Monthly Outflow Balance ($)</label>
+                <input type="number" id="outflow_balance" name="outflow_balance" step="0.01" value="{{ client.agreed_expense_budget }}" data-calc="outflow">
+                <small class="help-text">Expense budget: ${{ client.agreed_expense_budget }}</small>
+            </div>
+            <div class="input-group calc-result">
+                <label for="sacs-excess">Excess / Surplus savings</label>
+                <input type="text" id="sacs-excess" readonly class="input-readonly-calc">
+                <small class="help-text">Calculated: Inflow - Outflow</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Specific SACS Bubble Balances -->
+    <div class="form-section span-2">
+        <h3 class="section-title">SACS Key Account Balances</h3>
+        <p class="section-subtitle">Balances displayed directly in the SACS flow diagrams.</p>
+        <div class="inputs-row grid-2">
+            <div class="input-group">
+                <label for="private_reserve_balance">Private Reserve Current Balance ($)</label>
+                <input type="number" id="private_reserve_balance" name="private_reserve_balance" step="0.01" min="0" required placeholder="From bank email" 
+                       value="{{ last_report.private_reserve_balance if last_report and last_report.private_reserve_balance else '' }}">
+            </div>
+            <div class="input-group">
+                <label for="schwab_brokerage_balance">Schwab Brokerage Current Balance ($)</label>
+                <input type="number" id="schwab_brokerage_balance" name="schwab_brokerage_balance" step="0.01" min="0" required placeholder="From Schwab portal"
+                       value="{{ last_report.schwab_brokerage_balance if last_report and last_report.schwab_brokerage_balance else '' }}">
+            </div>
+        </div>
+    </div>
+
+    <!-- Dynamic TCC Asset & Liability Balances -->
+    <div class="form-section span-2">
+        <h3 class="section-title">TCC Asset & Liability Account Balances</h3>
+        <p class="section-subtitle">Enter the quarterly balance for each configured client account. Hover over "Use Last" to see previous values.</p>
+
+        {% if client.accounts %}
+            <div class="accounts-entry-grid">
+                {% for acc in client.accounts %}
+                {% set prev = prev_balances.get(acc.id) %}
+                <div class="account-entry-row glass-panel">
+                    <div class="acc-meta">
+                        <span class="acc-name">{{ acc.name }}</span>
+                        <span class="acc-badge {{ acc.account_type }}">{{ acc.account_type | replace('_', ' ') | title }}</span>
+                        {% if acc.last_four %}
+                            <span class="acc-number">(*{{ acc.last_four }})</span>
+                        {% endif %}
+                        {% if acc.is_liability and acc.interest_rate %}
+                            <span class="acc-rate">@ {{ acc.interest_rate }}%</span>
+                        {% endif %}
+                        {% if acc.account_type == 'trust' and acc.property_address %}
+                            <span class="acc-address">{{ acc.property_address }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="acc-inputs">
+                        <div class="input-subgroup">
+                            <label>Balance ($)</label>
+                            <div class="input-with-button">
+                                <input type="number" name="account_balance_{{ acc.id }}" step="0.01" min="0" required class="balance-input" id="bal-input-{{ acc.id }}"
+                                       value="{{ prev.balance if prev else '' }}"
+                                       data-acc-type="{{ acc.account_type }}"
+                                       data-is-liability="{{ 'true' if acc.is_liability else 'false' }}">
+                                {% if prev %}
+                                    <button type="button" class="btn btn-secondary btn-xs btn-use-last" data-target="bal-input-{{ acc.id }}" data-value="{{ prev.balance }}">Last: ${{ prev.balance | round(0) | int }}</button>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% if acc.account_type in ['non_retirement', 'retirement_client1', 'retirement_client2'] %}
+                        <div class="input-subgroup">
+                            <label>Cash portion ($) <span class="tag-optional">Opt.</span></label>
+                            <div class="input-with-button">
+                                <input type="number" name="account_cash_{{ acc.id }}" step="0.01" min="0" class="cash-input" id="cash-input-{{ acc.id }}"
+                                       value="{{ prev.cash_balance if prev and prev.cash_balance is not none else '' }}">
+                                {% if prev and prev.cash_balance is not none %}
+                                    <button type="button" class="btn btn-secondary btn-xs btn-use-last" data-target="cash-input-{{ acc.id }}" data-value="{{ prev.cash_balance }}">Last: ${{ prev.cash_balance | round(0) | int }}</button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="empty-state">No accounts configured. Go back to <a href="{{ url_for('client_edit', id=client.id) }}">Profile Settings</a> to add accounts.</p>
+        {% endif %}
+    </div>
+
+    <!-- Real-time TCC Totals Summary -->
+    <div class="form-section span-2">
+        <h3 class="section-title">📊 TCC Net Worth Summary (Real-time)</h3>
+        <p class="section-subtitle">Totals update automatically as you enter account balances above.</p>
+        <div class="tcc-totals-grid" id="tcc-totals-grid">
+            <div class="tcc-total-box total-ret1">
+                <span class="total-label">Client 1 Retirement</span>
+                <span class="total-value" id="total-ret1">$0</span>
+            </div>
+            <div class="tcc-total-box total-ret2">
+                <span class="total-label">Client 2 Retirement</span>
+                <span class="total-value" id="total-ret2">$0</span>
+            </div>
+            <div class="tcc-total-box total-nonret">
+                <span class="total-label">Non-Retirement</span>
+                <span class="total-value" id="total-nonret">$0</span>
+            </div>
+            <div class="tcc-total-box total-trust">
+                <span class="total-label">Trust / Property</span>
+                <span class="total-value" id="total-trust">$0</span>
+            </div>
+            <div class="tcc-total-box total-grand">
+                <span class="total-label">Grand Total Net Worth</span>
+                <span class="total-value" id="total-grand">$0</span>
+            </div>
+            <div class="tcc-total-box total-liab">
+                <span class="total-label">Liabilities (Separate)</span>
+                <span class="total-value" id="total-liab">$0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="form-actions-bar span-2">
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">Generate Quarterly Report</button>
+    </div>
+</form>
+{% endblock %}

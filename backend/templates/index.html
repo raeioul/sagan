@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header">
+    <h2>Client Dashboard</h2>
+    <p class="subtitle">Select a client below to configure profiles, request bank/Schwab balances, and compile SACS and TCC PDF reports.</p>
+</div>
+
+{% if clients %}
+    <div class="glass-card">
+        <table class="dashboard-table">
+            <thead>
+                <tr>
+                    <th>Client Name</th>
+                    <th>Spouse Name</th>
+                    <th>Client Age</th>
+                    <th>Total Monthly Inflow</th>
+                    <th>Agreed Expense Budget</th>
+                    <th>Last Report</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in clients %}
+                <tr>
+                    <td>
+                        <div class="client-name-container">
+                            <span class="client-name">{{ c.name }}</span>
+                            <span class="client-ssn">SSN: ***-**-{{ c.last_four_ssn }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        {% if c.spouse_name %}
+                            <div class="client-name-container">
+                                <span class="client-name">{{ c.spouse_name }}</span>
+                                <span class="client-ssn">SSN: ***-**-{{ c.spouse_last_four_ssn }}</span>
+                            </div>
+                        {% else %}
+                            <span class="no-data">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {{ c.age }}
+                        {% if c.spouse_age %}
+                            <span class="spouse-age">/ {{ c.spouse_age }}</span>
+                        {% endif %}
+                    </td>
+                    <td>${{ c.total_inflow | round(0) | int | numberformat if c.total_inflow else '0' }}</td>
+                    <td>${{ c.agreed_expense_budget | round(0) | int | numberformat if c.agreed_expense_budget else '0' }}</td>
+                    <td>
+                        {% if c.last_report_date %}
+                            <span class="report-date">{{ c.last_report_quarter }}</span>
+                            <span class="client-ssn">{{ c.last_report_date.strftime('%Y-%m-%d') }}</span>
+                        {% else %}
+                            <span class="no-data">No reports</span>
+                        {% endif %}
+                    </td>
+                    <td class="action-cell">
+                        <div class="actions-group">
+                            <a href="{{ url_for('client_edit', id=c.id) }}" class="btn btn-secondary btn-sm">Profile Settings</a>
+                            <a href="{{ url_for('report_new', id=c.id) }}" class="btn btn-primary btn-sm">Generate Report</a>
+                            <form action="{{ url_for('client_delete', id=c.id) }}" method="POST" style="display:inline" onsubmit="return confirm('Are you sure you want to delete client {{ c.name }}? This will permanently remove all accounts, deductibles, and historical reports.')">
+                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                            </form>
+                        </div>
+                        
+                        {% if c.reports %}
+                        <div class="reports-dropdown-container">
+                            <details class="reports-dropdown">
+                                <summary>Past Reports ({{ c.reports | length }})</summary>
+                                <div class="reports-dropdown-content">
+                                    {% for r in c.reports | sort(attribute='created_at', reverse=true) %}
+                                        <div class="report-dropdown-item">
+                                            <a href="{{ url_for('report_view', id=r.id) }}" class="report-link">{{ r.quarter }}</a>
+                                            <span class="report-meta">({{ r.created_at.strftime('%Y-%m-%d') }})</span>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </details>
+                        </div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="empty-state-card glass-card">
+        <div class="empty-state-icon">👥</div>
+        <h3>No clients configured yet</h3>
+        <p>Start by adding your first client profile with account structures and insurance deductibles.</p>
+        <a href="{{ url_for('client_new') }}" class="btn btn-primary">+ Add First Client</a>
+    </div>
+{% endif %}
+{% endblock %}

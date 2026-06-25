@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header">
+    <h2>{{ 'Edit Profile' if client else 'Add New Client' }}</h2>
+    <p class="subtitle">Define demographic details, salaries, agreed outflow budgets, insurance policies, and custom asset/liability account structures.</p>
+</div>
+
+<form method="POST" class="glass-form client-form-grid">
+    <!-- Part 1: Client Personal Details -->
+    <div class="form-section span-2">
+        <h3 class="section-title">Client 1 (Primary) Information</h3>
+        <div class="inputs-row">
+            <div class="input-group">
+                <label for="name">Full Name <span class="required-star">*</span></label>
+                <input type="text" id="name" name="name" value="{{ client.name if client else '' }}" required placeholder="e.g. Andrew Smith">
+            </div>
+            <div class="input-group">
+                <label for="dob">Date of Birth <span class="required-star">*</span></label>
+                <input type="date" id="dob" name="dob" value="{{ client.dob.strftime('%Y-%m-%d') if client else '' }}" required>
+            </div>
+            <div class="input-group">
+                <label for="last_four_ssn">SSN (Last 4 Digits) <span class="required-star">*</span></label>
+                <input type="text" id="last_four_ssn" name="last_four_ssn" maxlength="4" pattern="\d{4}" value="{{ client.last_four_ssn if client else '' }}" required placeholder="e.g. 1234">
+            </div>
+            <div class="input-group">
+                <label for="monthly_salary">Monthly Salary / Inflow ($)</label>
+                <input type="number" id="monthly_salary" name="monthly_salary" step="0.01" min="0" value="{{ client.monthly_salary if client else '0.00' }}">
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section span-2">
+        <h3 class="section-title">Client 2 (Spouse / Joint Partner) <span class="tag-optional">Optional</span></h3>
+        <div class="inputs-row">
+            <div class="input-group">
+                <label for="spouse_name">Full Name</label>
+                <input type="text" id="spouse_name" name="spouse_name" value="{{ client.spouse_name if client and client.spouse_name else '' }}" placeholder="e.g. Rebecca Smith">
+            </div>
+            <div class="input-group">
+                <label for="spouse_dob">Date of Birth</label>
+                <input type="date" id="spouse_dob" name="spouse_dob" value="{{ client.spouse_dob.strftime('%Y-%m-%d') if client and client.spouse_dob else '' }}">
+            </div>
+            <div class="input-group">
+                <label for="spouse_last_four_ssn">SSN (Last 4 Digits)</label>
+                <input type="text" id="spouse_last_four_ssn" name="spouse_last_four_ssn" maxlength="4" pattern="\d{4}" value="{{ client.spouse_last_four_ssn if client and client.spouse_last_four_ssn else '' }}" placeholder="e.g. 5678">
+            </div>
+            <div class="input-group">
+                <label for="spouse_monthly_salary">Monthly Salary / Inflow ($)</label>
+                <input type="number" id="spouse_monthly_salary" name="spouse_monthly_salary" step="0.01" min="0" value="{{ client.spouse_monthly_salary if client else '0.00' }}">
+            </div>
+        </div>
+    </div>
+
+    <!-- Part 2: Financial Planning & Inflow / Outflow Settings -->
+    <div class="form-section span-2">
+        <h3 class="section-title">SACS Outflow & Safety Settings</h3>
+        <div class="inputs-row grid-3">
+            <div class="input-group">
+                <label for="agreed_expense_budget">Agreed Monthly Expense Budget ($) <span class="required-star">*</span></label>
+                <input type="number" id="agreed_expense_budget" name="agreed_expense_budget" step="0.01" min="0" value="{{ client.agreed_expense_budget if client else '0.00' }}" required>
+                <small class="help-text">This will define the SACS Red Outflow Hub and automated transfer size.</small>
+            </div>
+            <div class="input-group">
+                <label for="private_reserve_target">Private Reserve Target Cap ($)</label>
+                <input type="number" id="private_reserve_target" name="private_reserve_target" step="0.01" min="0" value="{{ client.private_reserve_target if client else '0.00' }}">
+                <small class="help-text">Leave as 0.00 to automatically calculate: (6 &times; Expenses) + sum of all deductibles.</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Part 3: Insurance Deductibles -->
+    <div class="form-section span-2">
+        <div class="section-header-row">
+            <h3 class="section-title">Insurance Policy Deductibles</h3>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-add-deductible">+ Add Deductible</button>
+        </div>
+        <p class="section-subtitle">Deductibles added here will dynamically calculate the FICA safety cap.</p>
+        <div class="deductibles-list" id="deductibles-container">
+            {% if client and client.deductibles %}
+                {% for ded in client.deductibles %}
+                <div class="deductible-row form-row">
+                    <input type="hidden" name="deductible_id[]" value="{{ ded.id }}">
+                    <div class="col-field">
+                        <input type="text" name="deductible_label[]" value="{{ ded.label }}" placeholder="e.g. Health Insurance" required>
+                    </div>
+                    <div class="col-field">
+                        <input type="number" name="deductible_amount[]" value="{{ ded.amount }}" step="0.01" min="0" placeholder="Amount ($)" required>
+                    </div>
+                    <button type="button" class="btn btn-danger btn-sm remove-row-btn">&times;</button>
+                </div>
+                {% endfor %}
+            {% else %}
+                <!-- Initial template row -->
+                <div class="deductible-row form-row">
+                    <input type="hidden" name="deductible_id[]" value="">
+                    <div class="col-field">
+                        <input type="text" name="deductible_label[]" placeholder="e.g. Health Insurance">
+                    </div>
+                    <div class="col-field">
+                        <input type="number" name="deductible_amount[]" step="0.01" min="0" placeholder="Amount ($)">
+                    </div>
+                    <button type="button" class="btn btn-danger btn-sm remove-row-btn" style="display:none">&times;</button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Part 4: Dynamic Account Structures -->
+    <div class="form-section span-2">
+        <div class="section-header-row">
+            <h3 class="section-title">Client Account Structures (TCC Map)</h3>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-add-account">+ Add Account</button>
+        </div>
+        <p class="section-subtitle">Configure asset and liability accounts. These will appear in the quarterly report forms to capture balances.</p>
+        
+        <div class="accounts-list-headerform form-row header-row">
+            <div>Account Name</div>
+            <div>Account Type</div>
+            <div>Ownership</div>
+            <div>Last 4 digits</div>
+            <div>Int. Rate (Liabilities)</div>
+            <div class="prop-addr-col">Property Address</div>
+            <div></div>
+        </div>
+
+        <div class="accounts-list" id="accounts-container">
+            {% if client and client.accounts %}
+                {% for acc in client.accounts %}
+                <div class="account-row form-row">
+                    <input type="hidden" name="account_id[]" value="{{ acc.id }}">
+                    <div class="col-field">
+                        <input type="text" name="account_name[]" value="{{ acc.name }}" placeholder="e.g. Schwab Roth IRA" required>
+                    </div>
+                    <div class="col-field">
+                        <select name="account_type[]" onchange="togglePropertyAddress(this)" required>
+                            <option value="retirement_client1" {{ 'selected' if acc.account_type == 'retirement_client1' }}>Retirement (Client 1)</option>
+                            <option value="retirement_client2" {{ 'selected' if acc.account_type == 'retirement_client2' }}>Retirement (Client 2)</option>
+                            <option value="non_retirement" {{ 'selected' if acc.account_type == 'non_retirement' }}>Non-Retirement</option>
+                            <option value="trust" {{ 'selected' if acc.account_type == 'trust' }}>Trust Asset / Property</option>
+                            <option value="liability" {{ 'selected' if acc.account_type == 'liability' }}>Liability / Debt</option>
+                        </select>
+                    </div>
+                    <div class="col-field">
+                        <select name="account_owner[]" required>
+                            <option value="client1" {{ 'selected' if acc.owner == 'client1' }}>Client 1</option>
+                            <option value="client2" {{ 'selected' if acc.owner == 'client2' }}>Client 2</option>
+                            <option value="joint" {{ 'selected' if acc.owner == 'joint' }}>Joint</option>
+                            <option value="trust" {{ 'selected' if acc.owner == 'trust' }}>Trust</option>
+                        </select>
+                    </div>
+                    <div class="col-field">
+                        <input type="text" name="account_last_four[]" value="{{ acc.last_four or '' }}" maxlength="4" pattern="\d{4}" placeholder="e.g. 9876">
+                    </div>
+                    <div class="col-field">
+                        <input type="number" name="account_interest_rate[]" value="{{ acc.interest_rate if acc.interest_rate else '' }}" step="0.01" min="0" placeholder="e.g. 5.5%">
+                    </div>
+                    <div class="col-field prop-addr-col">
+                        <input type="text" name="account_property_address[]" value="{{ acc.property_address or '' }}" placeholder="123 Main St, Atlanta, GA" class="prop-addr-input" style="{{ 'display:block' if acc.account_type == 'trust' else 'display:none' }}">
+                    </div>
+                    <button type="button" class="btn btn-danger btn-sm remove-row-btn">&times;</button>
+                </div>
+                {% endfor %}
+            {% else %}
+                <!-- Initial default rows for a clean starting experience -->
+                <div class="account-row form-row">
+                    <input type="hidden" name="account_id[]" value="">
+                    <div class="col-field">
+                        <input type="text" name="account_name[]" placeholder="e.g. Pinnacle Checking" required>
+                    </div>
+                    <div class="col-field">
+                        <select name="account_type[]" onchange="togglePropertyAddress(this)" required>
+                            <option value="non_retirement">Non-Retirement</option>
+                            <option value="retirement_client1">Retirement (Client 1)</option>
+                            <option value="retirement_client2">Retirement (Client 2)</option>
+                            <option value="trust">Trust Asset / Property</option>
+                            <option value="liability">Liability / Debt</option>
+                        </select>
+                    </div>
+                    <div class="col-field">
+                        <select name="account_owner[]" required>
+                            <option value="joint">Joint</option>
+                            <option value="client1">Client 1</option>
+                            <option value="client2">Client 2</option>
+                            <option value="trust">Trust</option>
+                        </select>
+                    </div>
+                    <div class="col-field">
+                        <input type="text" name="account_last_four[]" maxlength="4" pattern="\d{4}" placeholder="e.g. 1122">
+                    </div>
+                    <div class="col-field">
+                        <input type="number" name="account_interest_rate[]" step="0.01" min="0" placeholder="—">
+                    </div>
+                    <div class="col-field prop-addr-col">
+                        <input type="text" name="account_property_address[]" placeholder="123 Main St, Atlanta, GA" class="prop-addr-input" style="display:none">
+                    </div>
+                    <button type="button" class="btn btn-danger btn-sm remove-row-btn" style="display:none">&times;</button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="form-actions-bar span-2">
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">{{ 'Save Profile Settings' if client else 'Create Client Profile' }}</button>
+    </div>
+</form>
+{% endblock %}

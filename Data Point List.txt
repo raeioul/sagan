@@ -1,0 +1,105 @@
+Data Point List
+
+• SACS:
+
+o Inflow: Client Salary, we gather this info from our onboarding meeting.
+o Outflow: This comes from their monthly expense worksheet, it is an agreed
+upon number and the quantity may vary quarterly/yearly.
+(this is also the same amount that will be automatically transferred below)
+o Automated Transfer out of Inflow: Salary - Outflow amount total.
+
+Second page
+
+o Private Reserve: We request the balance from the bank via email, 2 days prior
+to the meeting.
+o Schwab Brokerage (2nd account): Andrew or Rebecca (authorized users)
+retrieve the information directly from the website 2 days prior to meeting.
+o Target: Personalized number agreed on with the client that is set it by adding
+▪ 6+ months of normal expenses
+▪ All insurance policies deductibles
+
+• SACS Visual Flow Diagram (Text Representation):
+
+===================================================================
+
+SIMPLE AUTOMATED CASHFLOW SYSTEM (SACS)
+
+INCOME SOURCES
+
++--------------------+
+| Client 1: $8,000/mo| ---
++--------------------+     
+
++---> [   INFLOW HUB (GREEN)   ]
++--------------------+     /      |   Current: $15,000     |
+| Client 2: $7,000/mo| ---/       |   Floor:   $1,000      |
++--------------------+            +------------------------+
+|
++----------------------------------------+----------------------------------------+
+|                                                                                 |
+| (Automated Transfer on 28th)                                                    | (Remaining Surplus)
+v                                                                                 v
++------------------------+                                                        +------------------------+
+|   OUTFLOW HUB (RED)    |                                                        | PRIVATE RESERVE (BLUE) |
+|   Current: $12,000     |                                                        | Current: $3,000/mo     |
+|   Floor:   $1,000      |                                                        | (Savings / Wealth)     |
++------------------------+                                                        +------------------------+
+|
+v
+[  Monthly Expenses "X"  ]
+[       $12,000/mo       ]
+
+===================================================================
+
+• SACS Long Term Cashflow (Magnified Private Reserve Visual Flow):
+
+This diagram reveals what happens "under the hood" of the Private Reserve (Blue) circle over the long term. Surplus money flowing to savings is split between protection (FICA) and growth (Investment).
+
+===================================================================
+
+LONG TERM CASHFLOW (Magnified Private Reserve Cashflow)
+
+                (Monthly Surplus from SACS Inflow)
+                                 :
+                                 | (Incoming Flow)
+                                 v
+
+
++----------------------------------+     <=====>     +----------------------------------+
+|           FICA ACCOUNT           |    Automated    |        INVESTMENT ACCOUNT        |
+|             $75,000              |   Rebalancing   |             $15,000+             |
+|                                  |                 |                                  |
+|   6X Monthly Expenses +          |                 |   Remainder of surplus savings   |
+|   All Insurance Deductibles      |                 |   above the FICA safety cap      |
++----------------------------------+                 +----------------------------------+
+
+--- ACCOUNTS & SYSTEM RULES ---
+
+• FICA ACCOUNT (Light Blue Circle)
+- Target Cap: $75,000
+- Purpose: Acts as the primary financial safety net.
+- Rule: This balance is calculated specifically to cover 6 months of normal household expenses plus all insurance policy deductibles.
+
+• INVESTMENT ACCOUNT (Dark Blue Circle)
+- Balance: $15,000+
+- Purpose: Generates long-term wealth growth.
+- Rule: Once the FICA Account is fully funded at its target cap ($75,000), any remaining surplus money ("Remainder") cascades directly into this account.
+
+• AUTOMATED REBALANCING (Bi-directional Arrow)
+- System Logic: A double-headed arrow connects these two accounts. Money flows dynamically between them to maintain the FICA account's safety floor while continuously deploying excess capital into investment strategies.
+
+• TCC:
+o Client Information:
+
+▪ Name
+▪ Age
+▪ DOB
+▪ Last four of social
+
+o Liabilities:
+
+(retrieved from Right capital or Statements shared by client)
+▪ Type of liability
+▪ Interest Rate
+▪ Remaining Balance
+▪ Total of all liabilities
